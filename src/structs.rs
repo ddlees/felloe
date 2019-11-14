@@ -34,9 +34,7 @@ pub enum Command {
 
     #[structopt(name = "which")]
     /// Output path for downloaded helm <version>
-    Which {
-        version: Option<String>
-    },
+    Which { version: Option<String> },
 
     #[structopt(name = "exec")]
     /// Execute command with modified PATH, so downloaded helm <version> first
@@ -48,7 +46,7 @@ pub enum Command {
         versions: Vec<String>,
 
         #[structopt(short = "f", long = "force")]
-        force: bool
+        force: bool,
     },
 
     #[structopt(name = "prune")]
@@ -88,16 +86,3 @@ pub struct Release {
     pub tag_name: String,
     pub prerelease: bool,
 }
-
-// felloe                     Display downloaded helm versions and install selection
-// felloe latest                       Install the latest official helm release
-// felloe <version>                    Install helm <version>
-// felloe run <version> [args ...]     Execute downloaded helm <version> with [args ...]
-// felloe which <version>              Output path for downloaded helm <version>
-// felloe exec <vers> <cmd> [args...]  Execute command with modified PATH, so downloaded helm <version> first
-// felloe rm <version ...>             Remove the given installed version(s)
-// felloe prune                        Remove all downloaded versions except the currently installed version
-// felloe --latest                     Output the latest helm version available
-// felloe ls                           Output downloaded versions
-// felloe versions [version]           Output matching versions available for download
-// felloe uninstall                    Remove the installed helm

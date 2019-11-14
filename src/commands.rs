@@ -1,7 +1,10 @@
+use crate::constants::*;
+use crate::structs::*;
 use dirs;
 use flate2::read::GzDecoder;
 use futures::future::{self, Future};
 use futures::stream::Stream;
+use log::*;
 
 use indicatif::{ProgressBar, ProgressStyle};
 use reqwest::r#async::{Chunk, Client, Decoder};
@@ -11,11 +14,9 @@ use std::{
     io::{copy, Cursor},
     mem,
     path::PathBuf,
-    process::{Command},
+    process::Command,
 };
 use tar::Archive;
-
-use super::*;
 
 pub fn fetch_releases(count: usize, include_pre: bool) -> Result<Releases, failure::Error> {
     let mut core = tokio_core::reactor::Core::new()?;
@@ -115,7 +116,7 @@ pub fn download_release(version: &str) -> Result<(), failure::Error> {
     Ok(())
 }
 
-fn hash(file: &Vec<u8>) -> Result<String, failure::Error> {
+fn hash(file: &[u8]) -> Result<String, failure::Error> {
     let mut hasher = Sha256::new();
     hasher.input(file);
     let hash = format!("{:x}", hasher.result());
@@ -157,8 +158,8 @@ pub fn download(url: String) -> impl Future<Item = Cursor<Chunk>, Error = failur
 
             let body = mem::replace(res.body_mut(), Decoder::empty());
             body.inspect(move |chunk| {
-                pb.inc(*&chunk.len() as u64);
-                if pb.position() == *&chunk.len() as u64 {
+                pb.inc(chunk.len() as u64);
+                if pb.position() == chunk.len() as u64 {
                     pb.set_message(&file_name);
                 }
             })
@@ -167,7 +168,7 @@ pub fn download(url: String) -> impl Future<Item = Cursor<Chunk>, Error = failur
                 pb_clone.finish();
             })
         })
-        .map(|bytes| Cursor::new(bytes))
+        .map(Cursor::new)
         .from_err()
 }
 
@@ -365,10 +366,10 @@ pub fn run_helm(version: &str, args: Vec<String>) -> Result<(), failure::Error> 
     let helm_path = get_cache_path(&version)
         .join(format!("{}-{}", OS, ARCH))
         .join(HELM_BIN_NAME);
-    let command = Command::new(&helm_path).args(args).spawn().expect(&format!(
-        "{} failed to start",
-        helm_path.as_path().to_str().unwrap()
-    ));
+    let command = Command::new(&helm_path)
+        .args(args)
+        .spawn()
+        .unwrap_or_else(|_| panic!("{} failed to start", helm_path.as_path().to_str().unwrap()));
 
     command.wait_with_output()?;
 
@@ -417,8 +418,7 @@ pub fn versions(
     include_pre: bool,
     last: Option<usize>,
 ) -> Result<(), failure::Error> {
-    let filter = filter.unwrap_or(String::new());
-    let include_pre = include_pre || false;
+    let filter = filter.unwrap_or_default();
     let last = last.unwrap_or(25);
 
     let releases = fetch_releases(last, include_pre)?;

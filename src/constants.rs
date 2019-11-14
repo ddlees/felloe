@@ -51,12 +51,11 @@ pub static BAR_STYLE_TEMPLATE: &str =
     "{spinner:.green} {msg} {percent}% {bar:40.cyan/blue} {bytes}/{total_bytes} eta: {eta}";
 pub static BAR_PROGRESS_CHARS: &str = "#>-";
 
-pub static UNPACK_SPINNER_CHARS: &'static [&'static str] =
+pub static UNPACK_SPINNER_CHARS: &[&str] =
     &["▏", "▎", "▍", "▌", "▋", "▊", "▉", "▊", "▋", "▌", "▍", "▎"];
 
 pub static UNPACK_SPINNER_TEMPLATE: &str = "{spinner:.blue} {msg}";
 
-pub static VERIFY_SPINNER_CHARS: &'static [&'static str] =
-    &["⢹", "⢺", "⢼", "⣸", "⣇", "⡧", "⡗", "⡏"];
+pub static VERIFY_SPINNER_CHARS: &[&str] = &["⢹", "⢺", "⢼", "⣸", "⣇", "⡧", "⡗", "⡏"];
 
 pub static VERIFY_SPINNER_TEMPLATE: &str = "{spinner:.green} {msg}";
