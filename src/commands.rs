@@ -515,11 +515,12 @@ fn update_screen<W: Write>(
             queue!(
                 w,
                 SetForegroundColor(Color::Blue),
+                Output("  ‣ "),
                 Output(v),
                 SetAttribute(Attribute::Reset)
             )?;
         } else {
-            queue!(w, Output(v))?;
+            queue!(w, Output("    "), Output(v))?;
         }
 
         queue!(w, Output("\r\n"))?;
