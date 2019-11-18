@@ -1,8 +1,8 @@
-use std::sync::Arc;
-use std::io::{self, Read};
 use indicatif::ProgressBar;
 use log::Level;
 use serde_derive::Deserialize;
+use std::io::{self, Read};
+use std::sync::Arc;
 use structopt::clap::AppSettings::ColoredHelp;
 use structopt::StructOpt;
 

@@ -21,7 +21,7 @@ use std::{
     io::{copy, stdout, Write},
     path::PathBuf,
     process::Command,
-    sync::Arc
+    sync::Arc,
 };
 use tar::Archive;
 
@@ -32,10 +32,10 @@ pub fn fetch_releases(count: usize, include_pre: bool) -> Result<Releases, failu
     let releases: Releases = client.get(&url).send()?.json()?;
     let mut releases = Releases(
         releases
-        .0
-        .into_iter()
-        .filter(|rel| !rel.prerelease || include_pre)
-        .collect()
+            .0
+            .into_iter()
+            .filter(|rel| !rel.prerelease || include_pre)
+            .collect(),
     );
 
     releases.0.sort_by(|a, b| b.tag_name.cmp(&a.tag_name));
@@ -202,7 +202,6 @@ fn is_helm_installed(version: &str) -> bool {
 
 fn get_bin_path() -> Result<PathBuf, failure::Error> {
     if cfg!(target_os = "windows") {
-
         #[cfg(target_arch = "x86_64")]
         let path = std::env::var("programfiles(x86)")?;
 
@@ -449,19 +448,8 @@ pub fn select_version() -> Result<(), failure::Error> {
     let mut active_index = versions.iter().position(|v| v == &active_version).unwrap();
 
     let mut stdout = stdout();
-    queue!(stdout, EnterAlternateScreen)?;
-    queue!(stdout, Hide)?;
-    queue!(stdout, Clear(ClearType::All))?;
-    queue!(stdout, MoveTo(0, 0))?;
-    queue!(
-        stdout,
-        Output(
-            "Move ↑↓ to select an installed version\nReturn key (i) to activate\nDelete key (d) to uninstall\nq to quit".to_string(),
-        )
-    )?;
-
-    stdout.flush()?;
-    update_screen(&mut stdout, &versions, &active_index)?;
+    enter_alt_screen()?;
+    update_screen(&mut stdout, &versions, active_index)?;
 
     let _raw = RawScreen::into_raw_mode()?;
     let mut sync_stdin = input().read_sync();
@@ -473,17 +461,13 @@ pub fn select_version() -> Result<(), failure::Error> {
             if let InputEvent::Keyboard(k) = key_event {
                 match k {
                     KeyEvent::Ctrl('c') | KeyEvent::Char('q') => {
-                        queue!(stdout, Show)?;
-                        queue!(stdout, LeaveAlternateScreen)?;
-                        stdout.flush()?;
+                        leave_alt_screen()?;
 
                         break;
                     }
                     KeyEvent::Delete | KeyEvent::Backspace | KeyEvent::Char('d') => {
                         let version = String::from(versions.to_vec().get(active_index).unwrap());
-                        queue!(stdout, Show)?;
-                        queue!(stdout, LeaveAlternateScreen)?;
-                        stdout.flush()?;
+                        leave_alt_screen()?;
 
                         remove([version.clone()].to_vec(), false)?;
                         queue!(stdout, Output(format!("Uninstalled {}\r\n", version)))?;
@@ -491,9 +475,7 @@ pub fn select_version() -> Result<(), failure::Error> {
                     }
                     KeyEvent::Enter | KeyEvent::Char('i') => {
                         let version = String::from(versions.to_vec().get(active_index).unwrap());
-                        queue!(stdout, Show)?;
-                        queue!(stdout, LeaveAlternateScreen)?;
-                        stdout.flush()?;
+                        leave_alt_screen()?;
 
                         set_active(&version)?;
                         queue!(stdout, Output(format!("\rActivated {}\r\n", version)))?;
@@ -501,17 +483,17 @@ pub fn select_version() -> Result<(), failure::Error> {
                     }
                     KeyEvent::Up | KeyEvent::Char('w') | KeyEvent::Char('k') => {
                         if active_index > 0 {
-                            active_index = active_index - 1;
+                            active_index -= 1;
                         }
 
-                        update_screen(&mut stdout, &versions, &active_index)?;
+                        update_screen(&mut stdout, &versions, active_index)?;
                     }
                     KeyEvent::Down | KeyEvent::Char('s') | KeyEvent::Char('j') => {
                         if active_index < versions.len() - 1 {
-                            active_index = active_index + 1;
+                            active_index += 1;
                         }
 
-                        update_screen(&mut stdout, &versions, &active_index)?;
+                        update_screen(&mut stdout, &versions, active_index)?;
                     }
                     _ => { /* Default case: do nothing*/ }
                 }
@@ -524,12 +506,12 @@ pub fn select_version() -> Result<(), failure::Error> {
 
 fn update_screen<W: Write>(
     w: &mut W,
-    versions: &Vec<String>,
-    active: &usize,
+    versions: &[String],
+    active: usize,
 ) -> Result<(), failure::Error> {
     queue!(w, MoveTo(0, 5), Clear(ClearType::FromCursorDown))?;
     for (i, v) in versions.iter().enumerate() {
-        if &i == active {
+        if i == active {
             queue!(
                 w,
                 SetForegroundColor(Color::Blue),
@@ -543,5 +525,33 @@ fn update_screen<W: Write>(
         queue!(w, Output("\r\n"))?;
     }
     w.flush()?;
+    Ok(())
+}
+
+fn enter_alt_screen() -> Result<(), failure::Error> {
+    let mut stdout = stdout();
+    queue!(stdout, EnterAlternateScreen)?;
+    queue!(stdout, Hide)?;
+    queue!(stdout, Clear(ClearType::All))?;
+    queue!(stdout, MoveTo(0, 0))?;
+    queue!(
+        stdout,
+        Output(
+            "Move ↑↓ to select an installed version\nReturn key (i) to activate\nDelete key (d) to uninstall\nq to quit".to_string(),
+        )
+    )?;
+
+    stdout.flush()?;
+
+    Ok(())
+}
+
+fn leave_alt_screen() -> Result<(), failure::Error> {
+    let mut stdout = stdout();
+
+    queue!(stdout, Show)?;
+    queue!(stdout, LeaveAlternateScreen)?;
+    stdout.flush()?;
+
     Ok(())
 }
