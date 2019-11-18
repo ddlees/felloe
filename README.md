@@ -3,7 +3,7 @@
 
 Interactive Helm version management - For cluster hopping and trying new versions helm and tiller before upgrading your production cluster.
 
-![terminal](test/demo.svg)
+![terminal](images/demo.svg)
 
 ## Installation
 
