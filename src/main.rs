@@ -33,6 +33,8 @@ fn main() -> Result<(), ExitFailure> {
         println!("{}", release.tag_name);
     } else if let Some(version) = args.version {
         cmd::install(&version)?
+    } else {
+        cmd::select_version()?
     }
 
     Ok(())

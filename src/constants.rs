@@ -35,12 +35,6 @@ pub static HELM_BIN_NAME: &str = "helm";
 #[cfg(any(target_os = "linux", target_os = "macos"))]
 pub static TILLER_BIN_NAME: &str = "tiller";
 
-#[cfg(any(target_os = "linux", target_os = "macos"))]
-pub static BIN_DIR: &str = "/usr/local/bin";
-
-#[cfg(target_os = "windows")]
-pub static BIN_DIR: &str = "";
-
 #[cfg(target_os = "windows")]
 pub static HELM_BIN_NAME: &str = "helm.exe";
 

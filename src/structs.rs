@@ -1,3 +1,6 @@
+use std::sync::Arc;
+use std::io::{self, Read};
+use indicatif::ProgressBar;
 use log::Level;
 use serde_derive::Deserialize;
 use structopt::clap::AppSettings::ColoredHelp;
@@ -85,4 +88,18 @@ pub struct Releases(pub Vec<Release>);
 pub struct Release {
     pub tag_name: String,
     pub prerelease: bool,
+}
+
+pub struct DownloadProgress<R> {
+    pub stream: R,
+    pub pb: Arc<ProgressBar>,
+}
+
+impl<R: Read> Read for DownloadProgress<R> {
+    fn read(&mut self, buf: &mut [u8]) -> io::Result<usize> {
+        self.stream.read(buf).map(|n| {
+            self.pb.inc(n as u64);
+            n
+        })
+    }
 }

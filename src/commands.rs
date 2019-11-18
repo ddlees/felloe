@@ -1,85 +1,67 @@
 use crate::constants::*;
+use crate::structs::DownloadProgress;
 use crate::structs::*;
+use crossterm::{
+    cursor::{Hide, MoveTo, Show},
+    input::{input, InputEvent, KeyEvent},
+    queue,
+    screen::{EnterAlternateScreen, LeaveAlternateScreen, RawScreen},
+    style::{Attribute, Color, SetAttribute, SetForegroundColor},
+    terminal::{Clear, ClearType},
+    Output,
+};
 use dirs;
 use flate2::read::GzDecoder;
-use futures::future::{self, Future};
-use futures::stream::Stream;
-use log::*;
-
 use indicatif::{ProgressBar, ProgressStyle};
-use reqwest::r#async::{Chunk, Client, Decoder};
+use log::*;
+use reqwest::Client as ClientSync;
 use sha2::{Digest, Sha256};
 use std::{
     env, fs,
-    io::{copy, Cursor},
-    mem,
+    io::{copy, stdout, Write},
     path::PathBuf,
     process::Command,
+    sync::Arc
 };
 use tar::Archive;
 
 pub fn fetch_releases(count: usize, include_pre: bool) -> Result<Releases, failure::Error> {
-    let mut core = tokio_core::reactor::Core::new()?;
-
     let url = format!("{}?per_page={}", &GH_RELEASES_API, &count);
-    let client = Client::new();
+    let client = ClientSync::new();
 
-    core.run(
-        client
-            .get(&url)
-            .send()
-            .and_then(|mut res| res.json::<Releases>())
-            .from_err()
-            .map(|rels| {
-                Releases(
-                    rels.0
-                        .into_iter()
-                        .filter(|rel| !rel.prerelease || include_pre)
-                        .collect(),
-                )
-            }),
-    )
+    let releases: Releases = client.get(&url).send()?.json()?;
+    let mut releases = Releases(
+        releases
+        .0
+        .into_iter()
+        .filter(|rel| !rel.prerelease || include_pre)
+        .collect()
+    );
+
+    releases.0.sort_by(|a, b| b.tag_name.cmp(&a.tag_name));
+    releases.0.reverse();
+
+    Ok(releases)
 }
 
 pub fn fetch_release(version: &str) -> Result<Release, failure::Error> {
-    let mut core = tokio_core::reactor::Core::new()?;
-
     let url = if version == "latest" {
         format!("{}/{}", &GH_RELEASES_API, version)
     } else {
         format!("{}/tags/{}", &GH_RELEASES_API, version)
     };
 
-    let client = Client::new();
-
-    core.run(
-        client
-            .get(&url)
-            .send()
-            .and_then(|mut res| res.json::<Release>())
-            .from_err(),
-    )
+    Ok(ClientSync::new().get(&url).send()?.json()?)
 }
 
 pub fn download_release(version: &str) -> Result<(), failure::Error> {
-    let mut core = tokio_core::reactor::Core::new()?;
-
     let name = format!("helm-{}-{}-{}", version, OS, ARCH);
     let file_name = format!("{}.tar.gz", name);
     let file_url = format!("{}/{}", HELM_DOWNLOAD_URL, file_name);
     let sha_url = format!("{}.sha256", &file_url);
 
-    let mut file = Vec::<u8>::new();
-    let mut sha = Vec::<u8>::new();
-
-    let results = core.run(future::join_all(vec![
-        download(file_url),
-        download(sha_url),
-    ]))?;
-
-    let mut results = results.into_iter();
-    copy(&mut results.next().unwrap(), &mut file)?;
-    copy(&mut results.next().unwrap(), &mut sha)?;
+    let file = download(file_url)?;
+    let sha = download(sha_url)?;
 
     let verify_spinner = ProgressBar::new_spinner();
     verify_spinner.enable_steady_tick(150);
@@ -134,13 +116,12 @@ fn sha256sum(hash: &str, sum: &str) -> Result<(), failure::Error> {
     }
 }
 
-// TODO Refactor to move references around more appropriately
-pub fn download(url: String) -> impl Future<Item = Cursor<Chunk>, Error = failure::Error> {
+pub fn download(url: String) -> Result<Vec<u8>, failure::Error> {
     let file_name = String::from(PathBuf::from(&url).file_name().unwrap().to_str().unwrap());
 
     debug!("Setting up download progress bar");
     let length = fetch_content_length(&url).unwrap();
-    let pb = Box::new(ProgressBar::new(length));
+    let pb = Arc::new(ProgressBar::new(length));
 
     pb.set_style(
         ProgressStyle::default_bar()
@@ -148,41 +129,29 @@ pub fn download(url: String) -> impl Future<Item = Cursor<Chunk>, Error = failur
             .progress_chars(BAR_PROGRESS_CHARS),
     );
 
-    info!("Downloading {}", file_name);
-    Client::new()
-        .get(&url)
-        .send()
-        .and_then(move |mut res| {
-            debug!("Binding progress bar to download stream");
-            let pb_clone = Box::clone(&pb);
+    pb.set_message(&file_name);
 
-            let body = mem::replace(res.body_mut(), Decoder::empty());
-            body.inspect(move |chunk| {
-                pb.inc(chunk.len() as u64);
-                if pb.position() == chunk.len() as u64 {
-                    pb.set_message(&file_name);
-                }
-            })
-            .concat2()
-            .inspect(move |_| {
-                pb_clone.finish();
-            })
-        })
-        .map(Cursor::new)
-        .from_err()
+    info!("Downloading {}", file_name);
+    let mut stream = DownloadProgress {
+        pb: pb.clone(),
+        stream: ClientSync::new().get(&url).send()?,
+    };
+
+    let mut bytes = Vec::<u8>::new();
+
+    copy(&mut stream, &mut bytes)?;
+
+    pb.finish();
+
+    Ok(bytes)
 }
 
 pub fn fetch_content_length(url: &str) -> Result<u64, failure::Error> {
-    let mut core = tokio_core::reactor::Core::new()?;
-    let client = Client::new();
-
-    core.run(
-        client
-            .head(url)
-            .send()
-            .map(|res| res.content_length().unwrap())
-            .from_err(),
-    )
+    Ok(ClientSync::new()
+        .head(url)
+        .send()?
+        .content_length()
+        .unwrap())
 }
 
 pub fn install_latest() -> Result<(), failure::Error> {
@@ -231,15 +200,32 @@ fn is_helm_installed(version: &str) -> bool {
     false
 }
 
+fn get_bin_path() -> Result<PathBuf, failure::Error> {
+    if cfg!(target_os = "windows") {
+
+        #[cfg(target_arch = "x86_64")]
+        let path = std::env::var("programfiles(x86)")?;
+
+        #[cfg(any(target_arch = "x86", target_arch = "i686", target_arch = "i386"))]
+        let path = std::env::var("programfiles")?;
+
+        Ok(PathBuf::from(path).join("helm"))
+    } else {
+        Ok(PathBuf::from("/usr/local/bin"))
+    }
+}
+
 fn set_active(version: &str) -> Result<(), failure::Error> {
-    info!("Installing helm and tiller into {}", BIN_DIR);
+    let bin = get_bin_path()?;
+
+    info!("Installing helm and tiller into {}", bin.to_str().unwrap());
     let install_path = get_cache_path(version).join(format!("{}-{}", OS, ARCH));
 
     let helm_path = install_path.join(HELM_BIN_NAME);
     let tiller_path = install_path.join(TILLER_BIN_NAME);
 
-    let helm_sym_path = PathBuf::from(BIN_DIR).join(HELM_BIN_NAME);
-    let tiller_sym_path = PathBuf::from(BIN_DIR).join(TILLER_BIN_NAME);
+    let helm_sym_path = PathBuf::from(&bin).join(HELM_BIN_NAME);
+    let tiller_sym_path = PathBuf::from(&bin).join(TILLER_BIN_NAME);
 
     if helm_path.exists() {
         if helm_sym_path.exists() {
@@ -330,8 +316,8 @@ pub fn remove(versions: Vec<String>, force: bool) -> Result<(), failure::Error> 
     let active_version = get_active_version()?;
     if versions.contains(&active_version) {
         if force {
-            let helm_sym_path = PathBuf::from(BIN_DIR).join(HELM_BIN_NAME);
-            let tiller_sym_path = PathBuf::from(BIN_DIR).join(TILLER_BIN_NAME);
+            let helm_sym_path = get_bin_path()?.join(HELM_BIN_NAME);
+            let tiller_sym_path = get_bin_path()?.join(TILLER_BIN_NAME);
 
             if helm_sym_path.exists() {
                 fs::remove_file(helm_sym_path)?;
@@ -388,7 +374,7 @@ pub fn uninstall() -> Result<(), failure::Error> {
 }
 
 pub fn get_active_version() -> Result<String, failure::Error> {
-    let sym_path = PathBuf::from(BIN_DIR).join(HELM_BIN_NAME);
+    let sym_path = get_bin_path()?.join(HELM_BIN_NAME);
 
     if !sym_path.exists() {
         return Err(failure::err_msg("An active version is not set"));
@@ -452,5 +438,110 @@ pub fn which(version: Option<String>) -> Result<(), failure::Error> {
         println!("{}", tiller_path.as_path().to_str().unwrap());
     }
 
+    Ok(())
+}
+
+pub fn select_version() -> Result<(), failure::Error> {
+    let mut versions = get_installed_versions()?;
+    versions.sort();
+
+    let active_version = get_active_version()?;
+    let mut active_index = versions.iter().position(|v| v == &active_version).unwrap();
+
+    let mut stdout = stdout();
+    queue!(stdout, EnterAlternateScreen)?;
+    queue!(stdout, Hide)?;
+    queue!(stdout, Clear(ClearType::All))?;
+    queue!(stdout, MoveTo(0, 0))?;
+    queue!(
+        stdout,
+        Output(
+            "Move ↑↓ to select an installed version\nReturn key (i) to activate\nDelete key (d) to uninstall\nq to quit".to_string(),
+        )
+    )?;
+
+    stdout.flush()?;
+    update_screen(&mut stdout, &versions, &active_index)?;
+
+    let _raw = RawScreen::into_raw_mode()?;
+    let mut sync_stdin = input().read_sync();
+
+    loop {
+        let event = sync_stdin.next();
+
+        if let Some(key_event) = event {
+            if let InputEvent::Keyboard(k) = key_event {
+                match k {
+                    KeyEvent::Ctrl('c') | KeyEvent::Char('q') => {
+                        queue!(stdout, Show)?;
+                        queue!(stdout, LeaveAlternateScreen)?;
+                        stdout.flush()?;
+
+                        break;
+                    }
+                    KeyEvent::Delete | KeyEvent::Backspace | KeyEvent::Char('d') => {
+                        let version = String::from(versions.to_vec().get(active_index).unwrap());
+                        queue!(stdout, Show)?;
+                        queue!(stdout, LeaveAlternateScreen)?;
+                        stdout.flush()?;
+
+                        remove([version.clone()].to_vec(), false)?;
+                        queue!(stdout, Output(format!("Uninstalled {}\r\n", version)))?;
+                        break;
+                    }
+                    KeyEvent::Enter | KeyEvent::Char('i') => {
+                        let version = String::from(versions.to_vec().get(active_index).unwrap());
+                        queue!(stdout, Show)?;
+                        queue!(stdout, LeaveAlternateScreen)?;
+                        stdout.flush()?;
+
+                        set_active(&version)?;
+                        queue!(stdout, Output(format!("\rActivated {}\r\n", version)))?;
+                        break;
+                    }
+                    KeyEvent::Up | KeyEvent::Char('w') | KeyEvent::Char('k') => {
+                        if active_index > 0 {
+                            active_index = active_index - 1;
+                        }
+
+                        update_screen(&mut stdout, &versions, &active_index)?;
+                    }
+                    KeyEvent::Down | KeyEvent::Char('s') | KeyEvent::Char('j') => {
+                        if active_index < versions.len() - 1 {
+                            active_index = active_index + 1;
+                        }
+
+                        update_screen(&mut stdout, &versions, &active_index)?;
+                    }
+                    _ => { /* Default case: do nothing*/ }
+                }
+            }
+        }
+    }
+
+    Ok(())
+}
+
+fn update_screen<W: Write>(
+    w: &mut W,
+    versions: &Vec<String>,
+    active: &usize,
+) -> Result<(), failure::Error> {
+    queue!(w, MoveTo(0, 5), Clear(ClearType::FromCursorDown))?;
+    for (i, v) in versions.iter().enumerate() {
+        if &i == active {
+            queue!(
+                w,
+                SetForegroundColor(Color::Blue),
+                Output(v),
+                SetAttribute(Attribute::Reset)
+            )?;
+        } else {
+            queue!(w, Output(v))?;
+        }
+
+        queue!(w, Output("\r\n"))?;
+    }
+    w.flush()?;
     Ok(())
 }
