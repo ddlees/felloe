@@ -15,13 +15,13 @@ Interactive Helm version management - For cluster hopping and trying new version
 
 ### Homebrew
 
-``` sh
+``` console
 brew install felloe
 ```
 
 ### Chocolatey
 
-``` sh
+``` console
 choco install felloe
 ```
 
@@ -29,7 +29,7 @@ choco install felloe
 
 Install the package from crates.io:
 
-``` sh
+``` console
 cargo install felloe
 
 # Reinstall or upgrade:
