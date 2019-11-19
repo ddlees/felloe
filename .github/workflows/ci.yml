@@ -70,3 +70,11 @@ jobs:
         - uses: actions-rs/audit-check@v1
           with:
             token: ${{ secrets.GITHUB_TOKEN }}
+
+  lint:
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@v1
+      - uses: wagoid/commitlint-github-action@v1.2.2
