@@ -71,7 +71,7 @@ jobs:
           with:
             token: ${{ secrets.GITHUB_TOKEN }}
 
-  lint:
+  commit-lint:
     runs-on: ubuntu-latest
     env:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
