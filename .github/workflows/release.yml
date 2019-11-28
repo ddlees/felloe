@@ -1,0 +1,75 @@
+on:
+  release:
+    types: [published]
+
+name: Release
+
+jobs:
+  build:
+    name: Build
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os:
+          - ubuntu-latest
+          - macos-latest
+          - windows-latest
+        include:
+          - os: ubuntu-latest
+            target: x86_64-linux-gnu
+          - os: macos-latest
+            target: x86_64-darwin
+          - os: windows-latest
+            target: x86_64-windows-gnu
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v1
+      - name: Setup Cargo
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          override: true
+      - name: Build
+        uses: actions-rs/cargo@v1
+        with:
+          command: build
+          args: --release
+      - name: Cache
+        uses: actions/upload-artifact@v1
+        with:
+          name: ${{ matrix.target }}
+          path: ./target
+
+  upload-binaries:
+    runs-on: ubuntu-latest
+    needs: build
+    strategy:
+      matrix:
+        target:
+          - x86_64-linux-gnu
+          - x86_64-darwin
+          - x86_64-windows-gnu
+        include:
+          - target: x86_64-linux-gnu
+            bin: felloe
+          - target: x86_64-darwin
+            bin: felloe
+          - target: x86_64-windows-gnu
+            bin: felloe.exe
+    steps:
+      - uses: actions/download-artifact@v1
+        with:
+          name: ${{ matrix.target }}
+      - name: Create Zip File
+        uses: montudor/action-zip@v0.1.0
+        with:
+          args: zip --junk-paths felloe-${{ matrix.target }}.zip ${{ matrix.target }}/release/${{ matrix.bin }}
+      - name: Upload Artifact
+        uses: actions/upload-release-asset@v1.0.1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ github.event.release.upload_url }}
+          asset_path: felloe-${{ matrix.target }}.zip
+          asset_name: felloe-${{ matrix.target }}.zip
+          asset_content_type: application/zip
