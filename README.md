@@ -81,3 +81,18 @@ SUBCOMMANDS:
     versions     Output matching versions available for download
     which        Output path for downloaded helm <version>
 ```
+
+## License
+
+This work is [dual-licensed](LICENSE) under Apache 2.0 and MIT to help avoid problems using this software or its libraries with GPL2.
+
+`SPDX-License-Identifier: Apache-2.0 OR GPL-2.0-or-later`
+
+
+## Attributions
+
+This project was inspired by frequent cluster hopping, having to switch between versions of helm and the following projects:
+
+- [pyenv](https://github.com/pyenv/pyenv) - Python version manager
+- [n](https://github.com/tj/n) - Node version manager
+- [nvm](https://github.com/nvm-sh/nvm) - Node version manager
