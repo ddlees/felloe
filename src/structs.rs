@@ -3,8 +3,10 @@ use log::Level;
 use serde_derive::Deserialize;
 use std::io::{self, Read};
 use std::sync::Arc;
-use structopt::clap::AppSettings::ColoredHelp;
-use structopt::StructOpt;
+use structopt::{
+    clap::{AppSettings::ColoredHelp, Shell},
+    StructOpt,
+};
 
 // Add cool slogan for your app here, e.g.:
 /// ⎈ The helm version manager
@@ -79,6 +81,13 @@ pub enum Command {
     #[structopt(name = "uninstall")]
     /// Remove the installed helm
     Uninstall,
+
+    #[structopt(name = "completions")]
+    /// Generate completions for desired shell
+    Completions {
+        /// valid values: bash, fish, zsh, powershell, elvish
+        shell: Shell,
+    },
 }
 
 #[derive(Debug, Deserialize)]

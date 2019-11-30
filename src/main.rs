@@ -2,7 +2,8 @@ use env_logger::Builder;
 use exitfailure::ExitFailure;
 use felloe::{commands as cmd, Cli, Command};
 use log::Level;
-use structopt::StructOpt;
+use std::io;
+use structopt::{clap::Shell, StructOpt};
 
 fn main() -> Result<(), ExitFailure> {
     let args = Cli::from_args();
@@ -14,6 +15,15 @@ fn main() -> Result<(), ExitFailure> {
 
     if let Some(cmd) = args.cmd {
         match cmd {
+            Command::Completions { shell } => {
+                if let Shell::Zsh = shell {
+                    // Seems there's a bug with generating zsh completions; using bash instead
+                    Cli::clap().gen_completions_to("felloe", Shell::Bash, &mut io::stdout());
+                } else {
+                    Cli::clap().gen_completions_to("felloe", shell, &mut io::stdout());
+                }
+                Ok(())
+            }
             Command::Exec { version, args } => cmd::exec(version, args),
             Command::Latest => cmd::install_latest(),
             Command::List => cmd::list(),

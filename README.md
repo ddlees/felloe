@@ -12,14 +12,15 @@ Interactive Helm version management - For cluster hopping and trying new version
 1) Download a version from one of the [releases](https://github.com/ddlees/felloe/releases)
 2) Unpack the archive
 3) Move the `felloe` binary and/or add it your PATH
+4) `chmod a+x path/to/felloe`
 
-### Homebrew
+### [Homebrew](https://brew.sh)
 
 ``` console
 brew install felloe
 ```
 
-### Chocolatey
+### [Chocolatey](https://chocolatey.org) for Windows
 
 ``` console
 choco install felloe
@@ -38,7 +39,7 @@ cargo install felloe --force
 
 ### Build from source
 
-Buiding from source:
+Run the following to build from source:
 
 ``` console
 git clone https://github.com/ddlees/felloe.git
@@ -49,7 +50,29 @@ cargo install --path .
 cargo install --path . --force
 ```
 
+## Completions
+
+Supported shells include:
+- bash
+- fish
+- zsh
+- powershell
+- elvish
+
+``` console
+# bash completions
+felloe completions bash >> ~/.bash_profile
+
+# zsh completions
+felloe completions zsh >> ~/.zshrc
+
+# etc.
+...
+```
+
 ## Usage
+
+`felloe --help`
 
 ``` man
 felloe 0.1.0
@@ -70,16 +93,17 @@ ARGS:
     <version>    
 
 SUBCOMMANDS:
-    exec         Execute command with modified PATH, so downloaded helm <version> first
-    help         Prints this message or the help of the given subcommand(s)
-    latest       Install the latest official helm release
-    list         Output downloaded versions
-    prune        Remove all downloaded versions except the currently installed version
-    remove       Remove the given installed version(s)
-    run          Execute downloaded helm <version> with [args ...]
-    uninstall    Remove the installed helm
-    versions     Output matching versions available for download
-    which        Output path for downloaded helm <version>
+    completions    Generate completions for desired shell
+    exec           Execute command with modified PATH, so downloaded helm <version> first
+    help           Prints this message or the help of the given subcommand(s)
+    latest         Install the latest official helm release
+    list           Output downloaded versions
+    prune          Remove all downloaded versions except the currently installed version
+    remove         Remove the given installed version(s)
+    run            Execute downloaded helm <version> with [args ...]
+    uninstall      Remove the installed helm
+    versions       Output matching versions available for download
+    which          Output path for downloaded helm <version>
 ```
 
 ## License
