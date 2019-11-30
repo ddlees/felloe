@@ -1,5 +1,7 @@
-# `felloe` – Interactive Helm Version Management
+[![CI Status](https://github.com/ddlees/felloe/workflows/Continuous%20integration/badge.svg)](https://github.com/ddlees/felloe/actions)
+[![Audit Status](https://github.com/ddlees/felloe/workflows/Audit/badge.svg)](https://github.com/ddlees/felloe/actions)
 
+# `felloe` – Interactive Helm Version Management
 
 Interactive Helm version management - For cluster hopping and trying new versions helm and tiller before upgrading your production cluster.
 
