@@ -63,7 +63,7 @@ jobs:
       - name: Create Zip File
         uses: montudor/action-zip@v0.1.0
         with:
-          args: zip --junk-paths felloe-${{ matrix.target }}.zip ${{ matrix.target }}/release/${{ matrix.bin }}
+          args: zip --junk-paths felloe-${{ matrix.target }}.zip ${{ matrix.target }}/release/${{ matrix.bin }} README.md LICENSE
       - name: Upload Artifact
         uses: actions/upload-release-asset@v1.0.1
         env:
