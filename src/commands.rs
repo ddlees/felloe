@@ -1,6 +1,6 @@
 use crate::constants::*;
-use crate::structs::DownloadProgress;
-use crate::structs::*;
+use crate::progress::DownloadProgress;
+use crate::release::{Release, Releases};
 use crossterm::{
     cursor::{Hide, MoveTo, Show},
     input::{input, InputEvent, KeyEvent},
@@ -14,7 +14,7 @@ use dirs;
 use flate2::read::GzDecoder;
 use indicatif::{ProgressBar, ProgressStyle};
 use log::*;
-use reqwest::Client as ClientSync;
+use reqwest::Client;
 use sha2::{Digest, Sha256};
 use std::{
     env, fs,
@@ -27,7 +27,7 @@ use tar::Archive;
 
 pub fn fetch_releases(count: usize, include_pre: bool) -> Result<Releases, failure::Error> {
     let url = format!("{}?per_page={}", &GH_RELEASES_API, &count);
-    let client = ClientSync::new();
+    let client = Client::new();
 
     let releases: Releases = client.get(&url).send()?.json()?;
     let mut releases = Releases(
@@ -51,7 +51,7 @@ pub fn fetch_release(version: &str) -> Result<Release, failure::Error> {
         format!("{}/tags/{}", &GH_RELEASES_API, version)
     };
 
-    Ok(ClientSync::new().get(&url).send()?.json()?)
+    Ok(Client::new().get(&url).send()?.json()?)
 }
 
 pub fn download_release(version: &str) -> Result<(), failure::Error> {
@@ -134,7 +134,7 @@ pub fn download(url: String) -> Result<Vec<u8>, failure::Error> {
     info!("Downloading {}", file_name);
     let mut stream = DownloadProgress {
         pb: pb.clone(),
-        stream: ClientSync::new().get(&url).send()?,
+        stream: Client::new().get(&url).send()?,
     };
 
     let mut bytes = Vec::<u8>::new();
@@ -147,11 +147,7 @@ pub fn download(url: String) -> Result<Vec<u8>, failure::Error> {
 }
 
 pub fn fetch_content_length(url: &str) -> Result<u64, failure::Error> {
-    Ok(ClientSync::new()
-        .head(url)
-        .send()?
-        .content_length()
-        .unwrap())
+    Ok(Client::new().head(url).send()?.content_length().unwrap())
 }
 
 pub fn install_latest() -> Result<(), failure::Error> {

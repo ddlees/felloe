@@ -1,15 +1,10 @@
-use indicatif::ProgressBar;
 use log::Level;
-use serde_derive::Deserialize;
-use std::io::{self, Read};
-use std::sync::Arc;
 use structopt::{
     clap::{AppSettings::ColoredHelp, Shell},
     StructOpt,
 };
 
-// Add cool slogan for your app here, e.g.:
-/// ⎈ The helm version manager
+/// The helm version manager
 #[structopt(setting(ColoredHelp))]
 #[derive(Debug, StructOpt)]
 #[structopt(rename_all = "kebab-case")]
@@ -88,27 +83,4 @@ pub enum Command {
         /// valid values: bash, fish, zsh, powershell, elvish
         shell: Shell,
     },
-}
-
-#[derive(Debug, Deserialize)]
-pub struct Releases(pub Vec<Release>);
-
-#[derive(Debug, Deserialize)]
-pub struct Release {
-    pub tag_name: String,
-    pub prerelease: bool,
-}
-
-pub struct DownloadProgress<R> {
-    pub stream: R,
-    pub pb: Arc<ProgressBar>,
-}
-
-impl<R: Read> Read for DownloadProgress<R> {
-    fn read(&mut self, buf: &mut [u8]) -> io::Result<usize> {
-        self.stream.read(buf).map(|n| {
-            self.pb.inc(n as u64);
-            n
-        })
-    }
 }

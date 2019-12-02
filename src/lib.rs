@@ -1,5 +1,7 @@
+pub mod cli;
 pub mod commands;
-mod constants;
-pub mod structs;
+pub mod constants;
+pub mod progress;
+pub mod release;
 
-pub use structs::{Cli, Command};
+pub use cli::{Cli, Command};
