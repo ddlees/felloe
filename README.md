@@ -54,13 +54,6 @@ cargo install --path . --force
 
 ## Completions
 
-Supported shells include:
-- bash
-- fish
-- zsh
-- powershell
-- elvish
-
 #### bash
 
 ``` shell
