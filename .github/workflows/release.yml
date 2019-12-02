@@ -63,7 +63,15 @@ jobs:
       - name: Create Zip File
         uses: montudor/action-zip@v0.1.0
         with:
-          args: zip --junk-paths felloe-${{ matrix.target }}.zip ${{ matrix.target }}/release/${{ matrix.bin }} README.md LICENSE
+          args: "zip --junk-paths felloe-${{ matrix.target }}.zip \
+          ${{ matrix.target }}/release/${{ matrix.bin }} \
+          ${{ matrix.target }}/release/_felloe \
+          ${{ matrix.target }}/release/_felloe.ps1 \
+          ${{ matrix.target }}/release/felloe.bash \
+          ${{ matrix.target }}/release/felloe.fish \
+          ${{ matrix.target }}/release/felloe.elv \
+          README.md \
+          LICENSE"
       - name: Upload Artifact
         uses: actions/upload-release-asset@v1.0.1
         env:
