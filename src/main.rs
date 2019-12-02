@@ -2,8 +2,8 @@ use env_logger::Builder;
 use exitfailure::ExitFailure;
 use felloe::{commands as cmd, Cli, Command};
 use log::Level;
-use std::io;
-use structopt::{clap::Shell, StructOpt};
+use regex::Regex;
+use structopt::StructOpt;
 
 fn main() -> Result<(), ExitFailure> {
     let args = Cli::from_args();
@@ -16,12 +16,11 @@ fn main() -> Result<(), ExitFailure> {
     if let Some(cmd) = args.cmd {
         match cmd {
             Command::Completions { shell } => {
-                if let Shell::Zsh = shell {
-                    // Seems there's a bug with generating zsh completions; using bash instead
-                    Cli::clap().gen_completions_to("felloe", Shell::Bash, &mut io::stdout());
-                } else {
-                    Cli::clap().gen_completions_to("felloe", shell, &mut io::stdout());
-                }
+                let mut bytes = Vec::<u8>::new();
+                Cli::clap().gen_completions_to("felloe", shell, &mut bytes);
+                let content = String::from_utf8(bytes.to_vec())?;
+                let output = Regex::new(":_files")?.replace_all(&content, "");
+                println!("{}", output);
                 Ok(())
             }
             Command::Exec { version, args } => cmd::exec(version, args),
