@@ -61,15 +61,51 @@ Supported shells include:
 - powershell
 - elvish
 
-``` console
-# bash completions
-felloe completions bash >> ~/.bash_profile
+#### bash
 
-# zsh completions
-felloe completions zsh >> ~/.zshrc
+``` shell
+$ felloe completions bash >> ~/.bash_profile # macos
+$ felloe completions bash >> ~/.bashrc # linux
+```
 
-# etc.
-...
+#### zsh
+
+``` shell
+$ felloe completions zsh > /usr/local/share/zsh/site-functions/_felloe
+```
+
+#### fish
+
+``` shell
+$ mkdir -p ~/.config/fish/completions # (optional)
+$ felloe completions fish > ~/.config/fish/completions/felloe.fish
+```
+
+#### powershell
+
+The powershell completion scripts require PowerShell v5.0+ (which comes with Windows 10, but can be downloaded separately for windows 7 or 8.1).
+
+``` powershell
+# Check for profile
+C:\> Test-Path $profile
+
+# Create profile if none exists
+C:\> New-Item -path $profile -type file -force
+
+# Append completions to profile
+C:\> felloe completions powershell >>
+${env:USERPROFILE}\Documents\WindowsPowerShell\Microsoft.PowerShell_profile.ps1
+```
+
+#### elvish
+
+``` shell
+# Create completions plugin
+~> mkdir -p ~/.elvish/lib/completions
+~> felloe completions elvish > ~/.elvish/lib/completions/felloe.elv
+
+# Update rc.elv
+~> echo "use completions/felloe" >> ~/.elvish/rc.elv
 ```
 
 ## Usage
