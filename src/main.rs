@@ -2,7 +2,6 @@ use env_logger::Builder;
 use exitfailure::ExitFailure;
 use felloe::{commands as cmd, Cli, Command};
 use log::Level;
-use regex::Regex;
 use structopt::StructOpt;
 
 fn main() -> Result<(), ExitFailure> {
@@ -19,7 +18,7 @@ fn main() -> Result<(), ExitFailure> {
                 let mut bytes = Vec::<u8>::new();
                 Cli::clap().gen_completions_to("felloe", shell, &mut bytes);
                 let content = String::from_utf8(bytes.to_vec())?;
-                let output = Regex::new(":_files")?.replace_all(&content, "");
+                let output = content.replace(":_files", "");
                 println!("{}", output);
                 Ok(())
             }
