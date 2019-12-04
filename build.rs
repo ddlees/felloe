@@ -1,5 +1,6 @@
 include!("src/cli.rs");
 
+use std::fs;
 use std::path::PathBuf;
 
 fn main() {
@@ -8,7 +9,14 @@ fn main() {
     let manifest = std::env::var("CARGO_MANIFEST_DIR").unwrap();
     let profile = std::env::var("PROFILE").unwrap();
 
-    let outdir = PathBuf::from(manifest).join("target").join(profile);
+    let outdir = PathBuf::from(manifest)
+        .join("target")
+        .join(profile)
+        .join("completions");
+
+    if !outdir.exists() {
+        fs::create_dir_all(&outdir).unwrap();
+    }
 
     Cli::clap().gen_completions(&name, Shell::Bash, &outdir);
     Cli::clap().gen_completions(&name, Shell::Zsh, &outdir);
