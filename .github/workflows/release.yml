@@ -28,7 +28,7 @@ jobs:
         uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
-          override: true
+          override: 'true'
       - name: Build
         uses: actions-rs/cargo@v1
         with:
@@ -41,6 +41,7 @@ jobs:
           path: ./target
 
   upload-binaries:
+    name: Upload Release Artifacts
     runs-on: ubuntu-latest
     needs: build
     strategy:
@@ -57,22 +58,27 @@ jobs:
           - target: x86_64-windows-gnu
             bin: felloe.exe
     steps:
+      - name: Checkout
+        uses: actions/checkout@v1
       - uses: actions/download-artifact@v1
         with:
           name: ${{ matrix.target }}
-      - name: Create Zip File
-        uses: montudor/action-zip@v0.1.0
+      - name: Tarball
+        uses: juankaram/archive-action@v1.0.0
+        with:
+          args: "tar -czvf felloe-${{ matrix.target }}.tar.gz \
+          README.md \
+          LICENSE \
+          -C ./${{ matrix.target }}/release/ ${{ matrix.bin }} completions"
+      - name: Zip
+        uses: juankaram/archive-action@v1.0.0
         with:
           args: "zip --junk-paths felloe-${{ matrix.target }}.zip \
-          ${{ matrix.target }}/release/${{ matrix.bin }} \
-          ${{ matrix.target }}/release/_felloe \
-          ${{ matrix.target }}/release/_felloe.ps1 \
-          ${{ matrix.target }}/release/felloe.bash \
-          ${{ matrix.target }}/release/felloe.fish \
-          ${{ matrix.target }}/release/felloe.elv \
           README.md \
-          LICENSE"
-      - name: Upload Artifact
+          LICENSE \
+          ${{ matrix.target }}/release/${{ matrix.bin }} \
+          ${{ matrix.target }}/release/completions"
+      - name: Upload Zip
         uses: actions/upload-release-asset@v1.0.1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -81,3 +87,12 @@ jobs:
           asset_path: felloe-${{ matrix.target }}.zip
           asset_name: felloe-${{ matrix.target }}.zip
           asset_content_type: application/zip
+      - name: Upload Tarball
+        uses: actions/upload-release-asset@v1.0.1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ github.event.release.upload_url }}
+          asset_path: felloe-${{ matrix.target }}.tar.gz
+          asset_name: felloe-${{ matrix.target }}.tar.gz
+          asset_content_type: application/x-gzip
