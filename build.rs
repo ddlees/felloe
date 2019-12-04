@@ -9,18 +9,24 @@ fn main() {
     let manifest = std::env::var("CARGO_MANIFEST_DIR").unwrap();
     let profile = std::env::var("PROFILE").unwrap();
 
-    let outdir = PathBuf::from(manifest)
-        .join("target")
-        .join(profile)
-        .join("completions");
+    let root = PathBuf::from(manifest);
+    let license = root.join("LICENSE");
+    let readme = root.join("README.md");
 
-    if !outdir.exists() {
-        fs::create_dir_all(&outdir).unwrap();
+    let outdir = root.join("target").join(profile);
+
+    let completions = outdir.join("completions");
+
+    if !completions.exists() {
+        fs::create_dir_all(&completions).unwrap();
     }
 
-    Cli::clap().gen_completions(&name, Shell::Bash, &outdir);
-    Cli::clap().gen_completions(&name, Shell::Zsh, &outdir);
-    Cli::clap().gen_completions(&name, Shell::Fish, &outdir);
-    Cli::clap().gen_completions(&name, Shell::Elvish, &outdir);
-    Cli::clap().gen_completions(&name, Shell::PowerShell, &outdir);
+    Cli::clap().gen_completions(&name, Shell::Bash, &completions);
+    Cli::clap().gen_completions(&name, Shell::Zsh, &completions);
+    Cli::clap().gen_completions(&name, Shell::Fish, &completions);
+    Cli::clap().gen_completions(&name, Shell::Elvish, &completions);
+    Cli::clap().gen_completions(&name, Shell::PowerShell, &completions);
+
+    fs::copy(license, outdir.join("LICENSE")).unwrap();
+    fs::copy(readme, outdir.join("README.md")).unwrap();
 }
