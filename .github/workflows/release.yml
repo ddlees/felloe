@@ -67,17 +67,18 @@ jobs:
         uses: juankaram/archive-action@v1.0.0
         with:
           args: "tar -czvf felloe-${{ matrix.target }}.tar.gz \
+          -C ./${{ matrix.target }}/release/ \
+          ${{ matrix.bin }} \
+          completions \
           README.md \
-          LICENSE \
-          -C ./${{ matrix.target }}/release/ ${{ matrix.bin }} completions"
+          LICENSE"
       - name: Zip
-        uses: juankaram/archive-action@v1.0.0
-        with:
-          args: "zip --junk-paths felloe-${{ matrix.target }}.zip \
+        working-directory: ./${{ matrix.target }}/release
+        run: "zip -r ../../felloe-${{ matrix.target }}.zip \
+          ${{ matrix.bin }} \
+          completions \
           README.md \
-          LICENSE \
-          ${{ matrix.target }}/release/${{ matrix.bin }} \
-          ${{ matrix.target }}/release/completions"
+          LICENSE"
       - name: Upload Zip
         uses: actions/upload-release-asset@v1.0.1
         env:
