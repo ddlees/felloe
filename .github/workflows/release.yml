@@ -97,3 +97,23 @@ jobs:
           asset_path: felloe-${{ matrix.target }}.tar.gz
           asset_name: felloe-${{ matrix.target }}.tar.gz
           asset_content_type: application/x-gzip
+
+  publish-crate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v1
+      - name: Setup Cargo
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          override: 'true'
+      - name: Login
+        uses: actions-rs/cargo@v1
+        with:
+          command: login
+          args: ${{ secrets.CRATES_API_KEY }}
+      - name: Publish
+        uses: actions-rs/cargo@v1
+        with:
+          command: publish

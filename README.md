@@ -141,7 +141,7 @@ SUBCOMMANDS:
 
 This work is [dual-licensed](LICENSE) under Apache 2.0 and MIT to help avoid problems using this software or its libraries with GPL2.
 
-`SPDX-License-Identifier: Apache-2.0 OR GPL-2.0-or-later`
+`SPDX-License-Identifier: Apache-2.0 OR MIT`
 
 
 ## Attributions
