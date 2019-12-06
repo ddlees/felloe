@@ -1,0 +1,30 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2015/06/nuspec.xsd">
+  <metadata>
+    <id>felloe</id>
+    <title>felloe</title>
+    <version>0.1.0</version>
+    <authors>Dillon Lees</authors>
+    <owners>Dillon Lees</owners>
+    <summary>Interactive helm version manager</summary>
+    <description>For cluster hopping and trying new versions of helm and tiller before upgrading your production cluster</description>
+    <releaseNotes>https://github.com/ddlees/felloe/releases/tag/0.1.0</releaseNotes>
+    <projectUrl>https://github.com/ddlees/felloe</projectUrl>
+    <projectSourceUrl>https://github.com/ddlees/felloe</projectSourceUrl>
+    <bugTrackerUrl>https://github.com/ddlees/felloe/issues</bugTrackerUrl>
+    <docsUrl>https://github.com/ddlees/felloe</docsUrl>
+    <packageSourceUrl>https://github.com/ddlees/felloe/tree/master/Chocolatey</packageSourceUrl>
+    <tags>felloe helm kubernetes version management tiller</tags>
+    <copyright>2019 Dillon Lees</copyright>
+    <licenseUrl>https://github.com/ddlees/felloe/blob/master/LICENSE</licenseUrl>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <iconUrl>https://upload.wikimedia.org/wikipedia/commons/a/a2/BSicon_HELM.svg</iconUrl>
+    <dependencies>
+      <dependency id="vcredist2015" />
+    </dependencies>
+  </metadata>
+
+  <files>
+    <file src="tools\**" target="tools" />
+  </files>
+</package>

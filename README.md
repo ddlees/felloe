@@ -3,7 +3,7 @@
 
 # `felloe` – Interactive Helm Version Management
 
-Interactive Helm version management - For cluster hopping and trying new versions helm and tiller before upgrading your production cluster.
+Interactive Helm version management - For cluster hopping and trying new versions of helm and tiller before upgrading your production cluster.
 
 ![terminal](images/demo.svg)
 
