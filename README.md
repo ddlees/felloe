@@ -19,6 +19,7 @@ Interactive Helm version management - For cluster hopping and trying new version
 ### [Homebrew](https://brew.sh)
 
 ``` console
+brew tap ddlees/felloe
 brew install felloe
 ```
 
