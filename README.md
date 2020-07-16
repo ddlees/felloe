@@ -1,5 +1,6 @@
 [![CI Status](https://github.com/ddlees/felloe/workflows/Continuous%20integration/badge.svg)](https://github.com/ddlees/felloe/actions)
 [![Audit Status](https://github.com/ddlees/felloe/workflows/Audit/badge.svg)](https://github.com/ddlees/felloe/actions)
+[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fddlees%2Ffelloe.svg?type=shield)](https://app.fossa.io/projects/git%2Bgithub.com%2Fddlees%2Ffelloe?ref=badge_shield)
 
 # `felloe` – Interactive Helm Version Management
 
@@ -144,6 +145,9 @@ This work is [dual-licensed](LICENSE) under Apache 2.0 and MIT to help avoid pro
 
 `SPDX-License-Identifier: Apache-2.0 OR MIT`
 
+
+
+[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fddlees%2Ffelloe.svg?type=large)](https://app.fossa.io/projects/git%2Bgithub.com%2Fddlees%2Ffelloe?ref=badge_large)
 
 ## Attributions
 
