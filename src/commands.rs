@@ -244,11 +244,13 @@ fn set_active(version: &str) -> Result<(), failure::Error> {
         }
         fs::hard_link(tiller_path, tiller_sym_path)?;
     } else {
-        warn!(
-            "Unable to set active tiller {}. The executable does not exist at {}",
-            version,
-            tiller_path.to_str().unwrap()
-        );
+        if version.contains("v2") {
+            warn!(
+                "Unable to set active tiller {}. The executable does not exist at {}",
+                version,
+                tiller_path.to_str().unwrap()
+            );
+        }
     }
 
     Ok(())
