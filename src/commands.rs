@@ -10,7 +10,6 @@ use crossterm::{
     terminal::{Clear, ClearType},
     Output,
 };
-use dirs;
 use flate2::read::GzDecoder;
 use indicatif::{ProgressBar, ProgressStyle};
 use log::*;
@@ -243,7 +242,7 @@ fn set_active(version: &str) -> Result<(), failure::Error> {
             fs::remove_file(&tiller_sym_path)?;
         }
         fs::hard_link(tiller_path, tiller_sym_path)?;
-    } else {
+    } else if version.contains("v2") {
         warn!(
             "Unable to set active tiller {}. The executable does not exist at {}",
             version,
